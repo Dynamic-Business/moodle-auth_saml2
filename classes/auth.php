@@ -1063,6 +1063,43 @@ class auth extends \auth_plugin_base {
     }
 
     /**
+     * Hook for the session timeout.
+     * 
+     * Redirects to the Alternative Logout URL when setting 'Session timeout logout' is set to 'Yes'.
+     * 
+     * In situations where a user logs in via saml2 then leaves their computer unattended, Moodle will correctly timeout the Moodle 
+     * session (depending on sesson timeout settings) but if another user clicks the saml2 login link on Moodle, they will be
+     * automatically logged in under the previous user's account. This is because the Moodle session timeout does not logout the
+     * saml2 session. The hook along with the 'Session timeout logout' setting prevents that behaviour. 
+     *
+     * @param object $user
+     * @param string $sid session id
+     * @param int $timecreated start of session
+     * @param int $timemodified user last seen
+     * @return bool true means do not timeout session yet
+     */
+    public function ignore_timeout_hook($user, $sid, $timecreated, $timemodified) {
+        global $DB;
+
+        // Only redirect if 'Alternative Logout' and 'Session timeout logout' are set.
+        if (trim($this->config->alterlogout) != '' && $this->config->timeoutlogout) {
+            $alterlogout = $this->config->alterlogout;
+            $redirect = $alterlogout;
+
+            // Only redirect saml2 users to the Alternative Logout URL.
+            if ($user->auth == 'saml2') {
+                // Delete the Moodle session before we redirect.
+                $DB->delete_records('sessions', array('sid' => $sid));
+                // Do the redirect.
+                redirect($redirect);
+            }
+        }
+
+        // Do not ignore the session timeout.
+        return false;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function user_login($username, $password) {

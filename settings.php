@@ -343,6 +343,14 @@ if ($ADMIN->fulltree) {
             $authplugin->get_ssp_version()
             ));
 
+    // Redirect to Alternative Logout URL on session timeout.
+    $settings->add(new admin_setting_configselect(
+        'auth_saml2/timeoutlogout',
+        get_string('timeoutlogout', 'auth_saml2'),
+        get_string('timeoutlogout_help', 'auth_saml2'),
+        0,
+        $yesno));
+
 
     // Display locking / mapping of profile fields.
     $help = get_string('auth_updatelocal_expl', 'auth');
